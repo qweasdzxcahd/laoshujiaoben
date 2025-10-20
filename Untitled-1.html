@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0,minimum-scale=1.0">
+<title>父母性别预测</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei',sans-serif}body{background:#f0f7ff;min-height:100vh;padding:20px;padding-bottom:20px;display:flex;justify-content:center;align-items:center;-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important;-moz-text-size-adjust:100%!important}.test-wrap{max-width:550px;width:100%;background:#fff;border-radius:20px;padding:30px 25px;box-shadow:0 10px 30px rgba(173,216,230,0.15);position:relative;transform:translateY(-20px)}.test-header{text-align:center;margin-bottom:30px}.test-header h2{color:#2196f3;font-size:24px;margin-bottom:10px}.test-header p{color:#6a8ca9;font-size:16px}.progress-bar{height:8px;background:#e3f2fd;border-radius:4px;margin-bottom:20px;overflow:hidden}.progress-fill{height:100%;background:#2196f3;width:0%;transition:width .3s}.content-area{min-height:300px;display:flex;flex-direction:column;justify-content:center}.question-container{display:block}.question-container.hide{display:none}.question-item{text-align:center}.question-item .q-num{font-size:18px;margin-bottom:8px}.question-item .q-content{font-size:17px;margin-bottom:18px}.option-list{display:flex;flex-direction:column;gap:12px;margin:0 auto 30px;max-width:350px}.option-btn{padding:14px 18px;background:#f8fbfd;border:2px solid #ddd;border-radius:12px;text-align:center;cursor:pointer;transition:all .25s}.option-btn:hover{background:#f0f7ff;border-color:#999}.option-btn.selected{background:#4CAF50;border-color:#388e3c;color:#fff;font-weight:500}.next-btn,.submit-btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:16px;font-weight:500;cursor:pointer;transition:opacity .3s}.next-btn{background:#90caf9;color:#fff;cursor:not-allowed;opacity:.6}.next-btn.active{background:linear-gradient(120deg,#2196f3,#1976d2);cursor:pointer;opacity:1}.submit-btn{background:#90caf9;color:#fff;cursor:not-allowed;opacity:.6}.submit-btn.active{background:linear-gradient(120deg,#2196f3,#1976d2);cursor:pointer;opacity:1}.loading-wrap{display:none;min-height:300px;flex-direction:column;justify-content:center;align-items:center}.loading-spinner{width:40px;height:40px;border:4px solid #e3f2fd;border-top:4px solid #2196f3;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}.loading-text{font-size:20px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}#result-card{display:none;min-height:300px;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 20px}.result-title{font-size:20px;margin-bottom:20px}.result-text{color:red;font-size:28px;font-weight:bold;margin-bottom:30px}.restart-btn{padding:14px 30px;background:linear-gradient(120deg,#4caf50,#388e3c);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;transition:opacity .3s}.restart-btn:hover{opacity:.9}.more-btn{position:fixed;width:38px;height:38px;border:2px solid #fff;border-radius:50%;font-size:13px;line-height:34px;text-align:center;bottom:60px;right:15px;background:rgba(0,0,0,0.2);z-index:99999;display:none}.more-btn a{color:#fff;text-decoration:none;display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<audio id="clickSound" preload="auto"><source src="static/1.mp3" type="audio/mpeg"></audio>
+<div class="test-wrap">
+    <div class="test-header"><h2>父母性别预测</h2><p>通过科学算法预测父母性别</p></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="content-area">
+        <div class="question-container" id="question1" data-page="1">
+            <div class="question-item">
+                <div class="q-num">问题 1/4</div>
+                <div class="q-content">你想预测父亲还是母亲的性别？</div>
+                <div class="option-list">
+                    <div class="option-btn" data-trait="dad">父亲</div>
+                    <div class="option-btn" data-trait="mom">母亲</div>
+                </div>
+            </div>
+            <button class="next-btn" id="nextBtn1">下一题</button>
+        </div>
+        <div class="question-container hide" id="question2" data-page="2">
+            <div class="question-item">
+                <div class="q-num">问题 2/4</div>
+                <div class="q-content">你路了吗？</div>
+                <div class="option-list">
+                    <div class="option-btn" data-trait="dad">路了</div>
+                    <div class="option-btn" data-trait="mom">没路</div>
+                </div>
+            </div>
+            <button class="next-btn" id="nextBtn2">下一题</button>
+        </div>
+        <div class="question-container hide" id="question3" data-page="3">
+            <div class="question-item">
+                <div class="q-num">问题 3/4</div>
+                <div class="q-content">你月跑了吗？</div>
+                <div class="option-list">
+                    <div class="option-btn" data-trait="mom">月了</div>
+                    <div class="option-btn" data-trait="dad">没月</div>
+                </div>
+            </div>
+            <button class="next-btn" id="nextBtn3">下一题</button>
+        </div>
+        <div class="question-container hide" id="question4" data-page="4">
+            <div class="question-item">
+                <div class="q-num">问题 4/4</div>
+                <div class="q-content">你吃b了吗？</div>
+                <div class="option-list">
+                    <div class="option-btn" data-trait="dad">吃了</div>
+                    <div class="option-btn" data-trait="mom">没吃</div>
+                </div>
+            </div>
+       <button class="submit-btn" id="predictBtn">提交问卷</button>
+        </div>
+        <div class="loading-wrap" id="loadingWrap">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">量子分析中，请稍等。。。</div>
+        </div>
+        <div id="result-card">
+            <div class="result-title">预测结果</div>
+            <div class="result-text" id="resultText"></div>
+            <button class="restart-btn" id="restartBtn">重新开始</button>
+        </div>
+    </div>
+</div>
+<div class="more-btn" id="more-btn"><a href="https://5200.460.icu/1" target="_blank">更多</a></div>
+<script>
+let answers={},clickSound=document.getElementById('clickSound'),loadingWrap=document.getElementById('loadingWrap'),resultCard=document.getElementById('result-card'),resultText=document.getElementById('resultText'),restartBtn=document.getElementById('restartBtn'),progressFill=document.getElementById('progressFill'),moreBtn=document.getElementById('more-btn'),questions=[
+    {el:document.getElementById('question1'),btn:document.getElementById('nextBtn1')},
+    {el:document.getElementById('question2'),btn:document.getElementById('nextBtn2')},
+    {el:document.getElementById('question3'),btn:document.getElementById('nextBtn3')},
+    {el:document.getElementById('question4'),btn:document.getElementById('predictBtn')}
+],allOptions=document.querySelectorAll('.option-btn');
+
+questions.forEach((item,index)=>index!==0&&item.el.classList.add('hide'));
+loadingWrap.style.display='none';resultCard.style.display='none';
+
+allOptions.forEach(option=>{
+    option.addEventListener('click',()=>{
+        const parentList=option.closest('.option-list'),currentPage=option.closest('.question-container').dataset.page,targetBtn=questions[Number(currentPage)-1].btn;
+        parentList.querySelectorAll('.option-btn').forEach(opt=>opt.classList.remove('selected'));
+        option.classList.add('selected');
+        answers[currentPage]=option.dataset.trait;
+        targetBtn.classList.add('active');
+    });
+});
+
+questions[0].btn.addEventListener('click',()=>{if(answers['1']){clickSound.play();questions[0].el.classList.add('hide');questions[1].el.classList.remove('hide');progressFill.style.width='25%'}});
+questions[1].btn.addEventListener('click',()=>{if(answers['2']){clickSound.play();questions[1].el.classList.add('hide');questions[2].el.classList.remove('hide');progressFill.style.width='50%'}});
+questions[2].btn.addEventListener('click',()=>{if(answers['3']){clickSound.play();questions[2].el.classList.add('hide');questions[3].el.classList.remove('hide');progressFill.style.width='75%'}});
+questions[3].btn.addEventListener('click',()=>{
+    if(answers['4']){
+        clickSound.play();
+        questions.forEach(q=>q.el.classList.add('hide'));
+        loadingWrap.style.display='flex';
+        progressFill.style.width='100%';
+        setTimeout(()=>{
+            loadingWrap.style.display='none';
+            resultCard.style.display='flex';
+            resultText.textContent=answers['1']==='dad'?'结果：你的父亲是傻逼！':'结果：你的母亲是猪！';
+            moreBtn.style.display='block';
+        },2000);
+    }
+});
+
+restartBtn.addEventListener('click',()=>{
+    answers={};
+    resultCard.style.display='none';
+    loadingWrap.style.display='none';
+    moreBtn.style.display='none';
+    questions.forEach((item,index)=>{item.el.classList.add('hide');item.btn.classList.remove('active')});
+    questions[0].el.classList.remove('hide');
+    progressFill.style.width='0%';
+    allOptions.forEach(option=>option.classList.remove('selected'));
+});
+</script>
+</body>
+</html>
