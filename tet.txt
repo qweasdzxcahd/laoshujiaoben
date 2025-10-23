@@ -1,0 +1,170 @@
+--Kenny泛滥外部汉化脚本我的哔站UID:1531514159（删了这个死妈死爹死全家）
+local Translations = {
+   --["Select Target"] = "选择目标",
+   ["fly"]="飞行",
+["fly keybind"]="飞行键盘",
+["fly speed"]="飞行速度",
+["tpwalk"]="tp步行",
+["select mode"]="步行模式",
+["MoveDirection"]="移动方向",
+["Camera LookVector"]="视角方向",
+["anti admin"]="反管理",
+["kick"]="踢出",
+["serverhop"]="换服",
+["anti aim"]="反瞄准",
+["anti void"]="反虚空",
+["anti sit"]="反坐",
+["auto heal"]="自动回血",
+["auto mask"]="自动口罩",
+["auto armor"]="自动穿甲",
+["select player"]="选择玩家",
+["select mode"]="选择模式",
+["select gun"]="选择枪",
+["teleport"]="传送",
+["gun kill"]="枪杀",
+["auto kill player[guns]"]="自动杀玩家[枪]",
+["select gun"]="选择枪",
+["silent aim"]="子追",
+["kill aura"]="杀戮",
+["super punch[no delay]"]="蓄力拳[无延迟]",
+["stomp aura"]="踩踏",
+["grab aura"]="抓取",
+["phone spammer"]="消息轰炸",
+["slient block"]="静默防御",
+["rpg spammer[beta]"]="rpg轰炸",
+["break game[beta]"]="崩服",
+["farm mode"]="刷钱模式",
+["afk"]="挂机",
+["atm farm"]="自动atm",
+["atm farm position"]="自动atm位置",
+["airdrop farm"]="自动空头",
+["cash farm"]="自动捡钱",
+["cash="]"钱"
+["halloween mob farm="]"自动万圣节",
+["bank farm"]="自动银行",
+["treasure farm"]="自动宝藏",
+["jewelry farm"]="自动宝石",
+["all safe farm"]="自动保险箱",
+["vehicle farm"]="自动捡车",
+["auto rewards"]="自动领取奖励",
+["auto craft"]="自动制作",
+["auto stash"]="自动储存",
+["auto sell"]="自动出售",
+["sell all"]="出售所有"
+}
+
+local function translateText(text)
+    if not text or type(text) ~= "string" then return text end
+    
+    if Translations[text] then
+        return Translations[text]
+    end
+    
+    for en, cn in pairs(Translations) do
+        if text:find(en) then
+            return text:gsub(en, cn)
+        end
+    end
+    
+    return text
+end
+
+local function setupTranslationEngine()
+    local success, err = pcall(function()
+        local oldIndex = getrawmetatable(game).__newindex
+        setreadonly(getrawmetatable(game), false)
+        
+        getrawmetatable(game).__newindex = newcclosure(function(t, k, v)
+            if (t:IsA("TextLabel") or t:IsA("TextButton") or t:IsA("TextBox")) and k == "Text" then
+                v = translateText(tostring(v))
+            end
+            return oldIndex(t, k, v)
+        end)
+        
+        setreadonly(getrawmetatable(game), true)
+    end)
+    
+    if not success then
+        warn("元表劫持失败:", err)
+       
+        local translated = {}
+        local function scanAndTranslate()
+            for _, gui in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+                if (gui:IsA("TextLabel") or gui:IsA("TextButton") or gui:IsA("TextBox")) and not translated[gui] then
+                    pcall(function()
+                        local text = gui.Text
+                        if text and text ~= "" then
+                            local translatedText = translateText(text)
+                            if translatedText ~= text then
+                                gui.Text = translatedText
+                                translated[gui] = true
+                            end
+                        end
+                    end)
+                end
+            end
+            
+            local player = game:GetService("Players").LocalPlayer
+            if player and player:FindFirstChild("PlayerGui") then
+                for _, gui in ipairs(player.PlayerGui:GetDescendants()) do
+                    if (gui:IsA("TextLabel") or gui:IsA("TextButton") or gui:IsA("TextBox")) and not translated[gui] then
+                        pcall(function()
+                            local text = gui.Text
+                            if text and text ~= "" then
+                                local translatedText = translateText(text)
+                                if translatedText ~= text then
+                                    gui.Text = translatedText
+                                    translated[gui] = true
+                                end
+                            end
+                        end)
+                    end
+                end
+            end
+        end
+        
+        local function setupDescendantListener(parent)
+            parent.DescendantAdded:Connect(function(descendant)
+                if descendant:IsA("TextLabel") or descendant:IsA("TextButton") or descendant:IsA("TextBox") then
+                    task.wait(0.1)
+                    pcall(function()
+                        local text = descendant.Text
+                        if text and text ~= "" then
+                            local translatedText = translateText(text)
+                            if translatedText ~= text then
+                                descendant.Text = translatedText
+                            end
+                        end
+                    end)
+                end
+            end)
+        end
+        
+        pcall(setupDescendantListener, game:GetService("CoreGui"))
+        local player = game:GetService("Players").LocalPlayer
+        if player and player:FindFirstChild("PlayerGui") then
+            pcall(setupDescendantListener, player.PlayerGui)
+        end
+        
+        while true do
+            scanAndTranslate()
+            task.wait(3)
+        end
+    end
+end
+
+task.wait(2)
+
+setupTranslationEngine()
+
+local success, err = pcall(function()
+script_key="oNNpEyhjETLleUGzLrjFHoWrKzPpaxez";
+loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/cb3eba9992f4d5233b9fac5e5d2ce692.lua"))()
+
+
+
+end)
+
+if not success then
+    warn("加载失败:", err)
+end
