@@ -62,7 +62,7 @@ Window:SelectTab(1)
 Tab:Input({
     Title = "key",
     Callback = function(input) 
-        script_key="tostring(input)"
+        script_key=tostring(input) 
     end
 })
 
