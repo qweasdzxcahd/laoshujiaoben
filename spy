@@ -1,0 +1,299 @@
+--[[
+    Execute this script before you run ~~Luarmor loader~~any scripts
+--]]
+
+--!strict
+--!optimize 0
+
+local clonefunction, rawset
+    = clonefunction, rawset
+
+local Global  = getgenv() :: any
+local __index = getmetatable(Global).__index :: hash
+
+local HttpService = cloneref(game:GetService("HttpService")) :: HttpService
+local JSONEncode  = HttpService.JSONEncode
+
+rconsolename("Spy Console")
+
+local Copies = {
+    loadstring    = clonefunction(loadstring),
+    writefile     = clonefunction(writefile),
+    makefolder    = clonefunction(makefolder),
+    newcclosure   = clonefunction(newcclosure),
+    debug_getinfo = clonefunction(debug.getinfo),
+    debug_info    = clonefunction(debug.info),
+    isfile        = clonefunction(isfile),
+    request       = clonefunction(request),
+    http_request  = clonefunction(http.request),
+    os_date       = clonefunction(os.date),
+    pcall         = clonefunction(pcall),
+    typeof        = clonefunction(typeof),
+    task_defer    = clonefunction(task.defer),
+    error         = clonefunction(error),
+    string_find   = clonefunction(string.find),
+    string_rep    = clonefunction(string.rep),
+    string_sub    = clonefunction(string.sub),
+    HttpGet       = clonefunction(HttpGet or game.HttpGet),
+    HttpGetAsync  = clonefunction(HttpGetAsync or game.HttpGetAsync),
+    rconsoleprint = clonefunction(rconsoleprint),
+    unpack        = clonefunction(unpack),
+} :: {[string]: Function}
+
+local Bypassed = {} :: {[Function]: Function}
+
+local function FormatJSON(JSONString: string)
+    local string_rep = Copies.string_rep
+    local string_sub = Copies.string_sub
+
+    local Indent   = 0
+    local Result   = ""
+    local InString = false
+    local Escaped  = false
+
+    for Index = 1, #JSONString do
+        local Character = string_sub(JSONString, Index, Index)
+
+        if InString then
+            Result ..= Character
+            if Escaped then
+                Escaped = false
+            elseif Character == "\\" then
+                Escaped = true
+            elseif Character == "\"" then
+                InString = false
+            end
+            continue
+        end
+
+        if Character == "\"" then
+            Result ..= Character
+            InString = true
+        elseif Character == "{" or Character == "[" then
+            Indent += 1
+            Result ..= `{Character}\n{string_rep("    ", Indent)}`
+        elseif Character == "}" or Character == "]" then
+            Indent -= 1
+            Result ..= `\n{string_rep("    ", Indent)}{Character}`
+        elseif Character == "," then
+            Result ..= `{Character}\n{string_rep("    ", Indent)}`
+        elseif Character == ":" then
+            Result ..= `{Character} `
+        elseif Character ~= " " and Character ~= "\t" and Character ~= "\n" and Character ~= "\r" then
+            Result ..= Character
+        end
+    end
+
+    return Result
+end
+
+local function SaveFile(
+    FolderName: string,
+    FileName:   string,
+    Extention:  string,
+    Content:    string,
+    Copies:     typeof(Copies)
+)
+    local FolderPath = `Luarmor V4 Bypass/Spy/{FolderName}`
+    Copies.makefolder(FolderPath)
+
+    local FilePath = `{FolderPath}/{FileName}.{Extention}`
+    local Repeated = 1
+
+    while Copies.isfile(FilePath) do
+        Repeated += 1
+        FilePath  = `{FolderPath}/{FileName} ({Repeated}).{Extention}`
+    end
+
+    Copies.rconsoleprint(`Saving to file {FilePath}\n`)
+    Copies.writefile(FilePath, Content)
+end
+
+local function AddOverride(Table: hash?, Name: string, New: any, Original: any)
+    if Copies.typeof(New) == "function" then
+        New = Copies.newcclosure(New)
+    end
+
+    if Table then
+        rawset(Table, Name, New)
+    else
+        rawset(Global, Name, New)
+        __index[Name] = New
+    end
+
+    Bypassed[New] = Original
+end
+
+--// loadstring spy
+do
+    local function loadstring(...): Function
+        local Copies
+            = Copies
+
+        local Source, ChunkName
+
+        Copies.pcall(function(...)
+            local Arguments = {...}
+
+            Source    = Arguments[1]
+            ChunkName = Arguments[2]
+        end, ...)
+
+        if Copies.typeof(Source) == "string" then
+            Copies.task_defer(
+                Copies.pcall,
+                SaveFile,
+                "loadstring",
+                Copies.os_date("%Y-%m-%d_%H-%M-%S"),
+                "luau",
+                `-- Chunk name: {Copies.typeof(ChunkName) == "string" and ChunkName or "nil"}\n\n{Source}`,
+                Copies
+            )
+        end
+
+        return Copies.loadstring(...)
+    end
+
+    AddOverride(nil, "loadstring", loadstring, Copies.loadstring)
+end
+
+--// request spy
+do
+    local function request(...: HttpRequest): HttpResponse
+        local Copies
+            = Copies
+
+        local Response = Copies.request(...)
+
+        Copies.task_defer(
+            Copies.pcall,
+            SaveFile,
+            "request/Requests",
+            Copies.os_date("%Y-%m-%d_%H-%M-%S"),
+            "json",
+            FormatJSON(JSONEncode(HttpService, ...)),
+            Copies
+        )
+
+        Copies.task_defer(
+            Copies.pcall,
+            SaveFile,
+            "request/Responses",
+            Copies.os_date("%Y-%m-%d_%H-%M-%S"),
+            "json",
+            FormatJSON(JSONEncode(HttpService, Response)),
+            Copies
+        )
+
+        return Response
+    end
+
+    local function http_request(...: HttpRequest): HttpResponse
+        return request(...)
+    end
+
+    AddOverride(nil, "request", request, Copies.request)
+    AddOverride(nil, "http_request", http_request, Copies.http_request)
+end
+
+--// HttpGet spy
+do
+    local function HttpGet(...: string): string
+        local Copies
+            = Copies
+
+        local Response = Copies.HttpGet(...)
+
+        Copies.task_defer(
+            Copies.pcall,
+            SaveFile,
+            "HttpGet",
+            Copies.os_date("%Y-%m-%d_%H-%M-%S"),
+            "txt",
+            Response,
+            Copies
+        )
+
+        return Response
+    end
+
+    local function HttpGetAsync(...: string): string
+        return HttpGet(...)
+    end
+
+    AddOverride(nil, "HttpGet", HttpGet, Copies.HttpGet)
+    AddOverride(nil, "HttpGetAsync", HttpGetAsync, Copies.HttpGetAsync)
+
+    local game
+        = game
+
+    local getnamecallmethod = clonefunction(getnamecallmethod)
+    local Old_namecall
+
+    Old_namecall = hookmetamethod(game, "__namecall", function(self, ...)
+        if self == game and ({HttpGet = true, HttpGetAsync = true})[getnamecallmethod()] then
+            return HttpGet(...)
+        end
+        return Old_namecall(self, ...)
+    end)
+end
+
+--// debug.info, debug.getinfo spy
+do
+    local New_debug = {} :: hash
+
+    for Key, Value in table.clone(debug) :: hash do
+        New_debug[Key] = Value
+    end
+
+    AddOverride(nil, "debug", New_debug)
+
+    local OldResult_debug_getinfo = {}
+    local OldResult_debug_info    = {}
+
+    local function getinfo(...)
+        local Result   = (Copies.debug_getinfo :: typeof(debug.getinfo))(...)
+        local Function = Result.func
+
+        if (
+            Function == New_debug.getinfo or
+            Function == New_debug.info or
+            Bypassed[Function]
+        ) then
+            return Copies.unpack(OldResult_debug_getinfo[Function])
+        end
+
+        return Result
+    end
+
+    local function info(...)
+        local Verifing = (Copies.debug_info :: typeof(debug.info))(..., "f") :: Function
+        local Result   = {(Copies.debug_info :: typeof(debug.info))(...)}
+
+        if (
+            Verifing == New_debug.getinfo or
+            Verifing == New_debug.info or
+            Bypassed[Verifing]
+        ) then
+            Copies.pcall(function(...)
+                local _, Arguments = ...
+                local Name = Copies.string_find(Arguments, "n")
+
+                if Name then
+                    Result[Name] = OldResult_debug_info[Verifing][1]
+                end
+            end, ...)
+        end
+
+        return Copies.unpack(Result)
+    end
+
+    AddOverride(nil,       "getinfo", getinfo, Copies.debug_getinfo)
+    AddOverride(New_debug, "getinfo", getinfo, Copies.debug_getinfo)
+    AddOverride(New_debug, "info",    info,    Copies.debug_info)
+
+    for BypassedFunction, OriginalFunction in Bypassed do
+        OldResult_debug_getinfo[BypassedFunction] = {Copies.debug_getinfo(OriginalFunction)}
+        OldResult_debug_info   [BypassedFunction] = {Copies.debug_info(OriginalFunction, "nslaf")}
+    end
+end
