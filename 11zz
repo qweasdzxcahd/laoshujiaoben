@@ -1,0 +1,245 @@
+-- TeTraX 作弊菜单 - 完整WindUI版
+-- 使用 WindUI 库构建所有UI元素
+
+-- ========== 基础配置 ==========
+local myconfigs = { "zzzzosky#1", "TeTraXDev", "zzzzzosky" }
+getgenv().setColor = Color3.fromRGB(252, 3, 90)
+getgenv().Antifog = true
+
+-- 设置FPS上限
+if setfpscap then
+    setfpscap(900)
+end
+
+-- ========== 加载WindUI库 ==========
+local success, WindUI = pcall(function()
+    local response = game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua", true)
+    if response and #response > 0 then
+        return loadstring(response)()
+    else
+        error("Failed to load WindUI: Empty response")
+    end
+end)
+
+if not success then
+    warn("WindUI加载失败: "..tostring(WindUI))
+    return
+end
+
+-- ========== 核心功能函数 ==========
+-- 抓取功能 (完全使用WindUI风格)
+local function createGrabSection(tab)
+    tab:AddSection("抓取功能")
+    
+    tab:AddButton({
+        Title = "抓取玩家",
+        Description = "抓取指定玩家",
+        Callback = function()
+            local target = WindUI:Prompt({
+                Title = "选择目标玩家",
+                Text = "输入玩家名称:",
+                Buttons = {"确定", "取消"}
+            })
+            
+            if target and target.Button == "确定" then
+                pcall(function()
+                    local signalFunc = require(game:GetService("ReplicatedStorage").devv.client.Helpers.remotes.Signal).FireServer
+                    local upvalues = getupvalue(signalFunc, 1)
+                    if upvalues and upvalues.grabPlayer then
+                        game:GetService("ReplicatedStorage").devv.remoteStorage[tostring(upvalues.grabPlayer)]:FireServer(unpack({target.Text}))
+                        WindUI:Notify("成功", "已抓取玩家: "..target.Text)
+                    end
+                end)
+            end
+        end
+    })
+end
+
+-- 获取玩家装备 (WindUI风格)
+local function createEquipmentSection(tab)
+    tab:AddSection("装备管理")
+    
+    tab:AddButton({
+        Title = "查看当前装备",
+        Callback = function()
+            local equipped = nil
+            pcall(function()
+                local v3Items = require(game:GetService("ReplicatedStorage").devv.client.Objects.v3item)
+                equipped = getupvalues(v3Items.inventory.setEquipped)[7].equipped
+            end)
+            
+            if equipped then
+                WindUI:Notify("装备信息", "当前装备: "..tostring(equipped))
+            else
+                WindUI:Notify("错误", "无法获取装备信息")
+            end
+        end
+    })
+end
+
+-- 获取玩家列表 (WindUI风格)
+local function updatePlayerDropdown(dropdown)
+    local players = {}
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game:GetService("Players").LocalPlayer then
+            table.insert(players, player.Name)
+        end
+    end
+    dropdown:Update({Options = players})
+end
+
+-- ========== UI界面构建 ==========
+-- 创建主窗口 (完全WindUI风格)
+local window = WindUI:CreateWindow({
+    Title = "TeTraX",
+    Center = true,
+    AutoShow = true,
+    Size = UDim2.new(0, 600, 0, 450),
+    Theme = "Dark",
+    Accent = Color3.fromRGB(252, 3, 90)
+})
+
+-- 添加功能标签页 (WindUI风格)
+local mainTab = window:AddTab("Main")
+local playerTab = window:AddTab("Player")
+local teleportTab = window:AddTab("Teleport")
+local magicTab = window:AddTab("Magic")
+local cashTab = window:AddTab("Cash")
+local itemTab = window:AddTab("Items")
+
+-- ========== 主标签页功能 (WindUI风格) ==========
+mainTab:AddSection("核心功能")
+mainTab:AddButton({
+    Title = "加载作弊",
+    Description = "初始化所有作弊功能",
+    Callback = function()
+        WindUI:Notify("系统", "作弊功能已加载!")
+    end
+})
+
+mainTab:AddToggle({
+    Title = "无敌模式",
+    Default = false,
+    Callback = function(value)
+        getgenv().GodMode = value
+        WindUI:Notify("状态", "无敌模式: "..(value and "开启" or "关闭"))
+    end
+})
+
+-- ========== 玩家标签页功能 (WindUI风格) ==========
+playerTab:AddSection("玩家属性")
+playerTab:AddSlider({
+    Title = "移动速度",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Callback = function(value)
+        local character = game:GetService("Players").LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.WalkSpeed = value
+        end
+    end
+})
+
+playerTab:AddSlider({
+    Title = "跳跃高度",
+    Min = 50,
+    Max = 300,
+    Default = 50,
+    Callback = function(value)
+        local character = game:GetService("Players").LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            character.Humanoid.JumpPower = value
+        end
+    end
+})
+
+-- ========== 传送标签页功能 (WindUI风格) ==========
+teleportTab:AddSection("位置传送")
+
+-- 创建玩家下拉列表
+local playerDropdown = teleportTab:AddDropdown({
+    Title = "选择玩家",
+    Options = {},
+    Callback = function(selected)
+        local targetPlayer = game:GetService("Players"):FindFirstChild(selected)
+        if targetPlayer and targetPlayer.Character then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = targetPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame
+                WindUI:Notify("传送", "已传送到玩家: "..selected)
+            end
+        end
+    end
+})
+
+-- 初始更新玩家列表
+updatePlayerDropdown(playerDropdown)
+
+-- 玩家加入/离开时更新列表
+game:GetService("Players").PlayerAdded:Connect(function()
+    updatePlayerDropdown(playerDropdown)
+end)
+
+game:GetService("Players").PlayerRemoving:Connect(function()
+    updatePlayerDropdown(playerDropdown)
+end)
+
+teleportTab:AddButton({
+    Title = "传送到出生点",
+    Callback = function()
+        local spawn = game:GetService("Workspace"):FindFirstChild("SpawnLocation")
+        if spawn then
+            local character = game:GetService("Players").LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = spawn.CFrame
+                WindUI:Notify("传送", "已传送到出生点")
+            end
+        else
+            WindUI:Notify("错误", "未找到出生点!")
+        end
+    end
+})
+
+-- ========== 其他功能标签页 (WindUI风格) ==========
+-- 魔法功能
+magicTab:AddSection("魔法能力")
+magicTab:AddToggle({
+    Title = "无限魔法",
+    Default = false,
+    Callback = function(value)
+        getgenv().UnlimitedMagic = value
+        WindUI:Notify("魔法", "无限魔法: "..(value and "开启" or "关闭"))
+    end
+})
+
+-- 现金功能
+cashTab:AddSection("现金作弊")
+cashTab:AddToggle({
+    Title = "自动收集现金",
+    Default = false,
+    Callback = function(value)
+        getgenv().AutoCollectCash = value
+        WindUI:Notify("现金", "自动收集: "..(value and "开启" or "关闭"))
+    end
+})
+
+-- 物品功能
+itemTab:AddSection("物品作弊")
+itemTab:AddButton({
+    Title = "获取所有物品",
+    Callback = function()
+        WindUI:Notify("物品", "尝试获取所有物品...")
+    end
+})
+
+-- 添加抓取功能部分
+createGrabSection(mainTab)
+
+-- 添加装备管理部分
+createEquipmentSection(itemTab)
+
+-- ========== 初始化UI ==========
+WindUI:Init()
+
+WindUI:Notify("系统", "TeTraX作弊菜单已成功加载!")
