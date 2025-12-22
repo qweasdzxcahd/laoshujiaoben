@@ -1,0 +1,638 @@
+-- TeTraX 作弊菜单 - 完整整合版
+-- 使用 WindUI 库
+
+-- 防止重复执行
+if _G.TeTraX_Script_Loaded then
+    _G.TeTraX_Execution_Count = (_G.TeTraX_Execution_Count or 0) + 1
+    return
+end
+
+_G.TeTraX_Script_Loaded = true
+_G.TeTraX_Execution_Count = 1
+
+-- ========== 基础配置 ==========
+local myconfigs = { "zzzzosky#1", "TeTraXDev", "zzzzzosky" }
+getgenv().setColor = Color3.fromRGB(252, 3, 90)
+getgenv().Antifog = true
+
+-- 设置FPS上限
+if setfpscap then
+    setfpscap(900)
+end
+
+-- ========== 加载WindUI库 ==========
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+local Window = WindUI:CreateWindow({
+    Title = "TeTraX",
+    Icon = "crown",
+    Author = "by TeTraXCorporation",
+    AuthorImage = 14219740649,
+    Folder = "TeTraX",
+    Size = UDim2.fromOffset(560, 360),
+    Transparent = true,
+    User = {
+        Enabled = true,
+        Callback = function() 
+            print("用户信息点击") 
+        end,
+        Anonymous = true
+    },
+})
+
+Window:EditOpenButton(
+    {
+        Title = "打开 TeTraX",
+        Icon = "crown",
+        CornerRadius = UDim.new(0, 13),
+        StrokeThickness = 4,
+        Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(252, 3, 90)),ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 60, 129))}),
+        Draggable = true
+    }
+)
+
+-- ========== UI辅助函数 ==========
+function Tab(a)
+    return Window:Tab({Title = a, Icon = "eye"})
+end
+
+function Button(a, b, c)
+    return a:Button({Title = b, Callback = c})
+end
+
+function Toggle(a, b, c, d)
+    return a:Toggle({Title = b, Value = c, Callback = d})
+end
+
+function Slider(a, b, c, d, e, f)
+    return a:Slider({Title = b, Step = 1, Value = {Min = c, Max = d, Default = e}, Callback = f})
+end
+
+function Dropdown(a, b, c, d, e)
+    return a:Dropdown({Title = b, Values = c, Value = d, Callback = e})
+end
+
+function Input(a, b, c, d, e, f)
+    return a:Input({
+        Title = b,
+        Desc = c or "",
+        Value = d or "",
+        Placeholder = e or "",
+        Callback = f
+    })
+end
+
+-- ========== 核心功能函数 ==========
+-- 抓取功能
+function grabfunc(p93)
+    local success, result = pcall(function()
+        local signalFunc = require(game:GetService("ReplicatedStorage").devv.client.Helpers.remotes.Signal).FireServer
+        local upvalues = getupvalue(signalFunc, 1)
+        if upvalues and upvalues.grabPlayer then
+            game:GetService("ReplicatedStorage").devv.remoteStorage[tostring(upvalues.grabPlayer)]:FireServer(unpack({p93}))
+        end
+    end)
+    if not success then warn("grabfunc错误: "..tostring(result)) end
+end
+
+-- 获取玩家装备
+function getPlayerEquipped()
+    local equippedItem = nil
+    pcall(function()
+        local v3Items = require(game:GetService("ReplicatedStorage").devv.client.Objects.v3item)
+        equippedItem = getupvalues(v3Items.inventory.setEquipped)[7].equipped
+    end)
+    return equippedItem
+end
+
+-- 获取玩家列表
+local function getPlayers()
+    local players = {}
+    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            table.insert(players, player.Name)
+        end
+    end
+    return players
+end
+
+-- ========== 创建标签页 ==========
+local Taba = Tab("首页")
+local Tab1 = Tab("通用")
+local Tab2 = Tab("ESP")
+local Tab3 = Tab("自瞄")
+local Tab4 = Tab("子追")
+local Tabc = Tab("范围")
+local Tabjb = Tab("各大脚本")
+local Tab5 = Tab("力量传奇")
+local Tab6 = Tab("忍者传奇")
+local Tab7 = Tab("极速传奇")
+local Tab8 = Tab("墨水游戏")
+local Tabd = Tab("催更地点")
+local Tabb = Tab("设置")
+
+-- ========== 首页标签页 ==========
+local player = game.Players.LocalPlayer
+
+Taba:Paragraph({
+    Title = "系统信息",
+    Desc = string.format("用户名: %s\n显示名: %s\n用户ID: %d\n账号年龄: %d天", 
+        player.Name, player.DisplayName, player.UserId, player.AccountAge),
+    Image = "info",
+    ImageSize = 20,
+    Color = Color3.fromHex("#0099FF")
+})
+
+local fpsCounter = 0
+local fpsLastTime = tick()
+local fpsText = "计算中..."
+
+spawn(function()
+    while wait() do
+        fpsCounter = fpsCounter + 1
+        
+        if tick() - fpsLastTime >= 1 then
+            fpsText = string.format("%.1f FPS", fpsCounter)
+            fpsCounter = 0
+            fpsLastTime = tick()
+        end
+    end
+end)
+
+Taba:Paragraph({
+    Title = "性能信息",
+    Desc = "帧率: " .. fpsText,
+    Image = "bar-chart",
+    ImageSize = 20,
+    Color = Color3.fromHex("#00A2FF")
+})
+
+Taba:Paragraph({
+    Title = "TeTraX 作弊菜单",
+    Desc = [[ 功能强大的综合作弊菜单 ]],
+    Image = "crown",
+    ImageSize = 24,
+    Color = Color3.fromHex("#FFFFFF"),
+    BackgroundTransparency = 1,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+Taba:Paragraph({
+    Title = "警告：使用风险自负",
+    Desc = [[ 封号与脚本无关 ]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#FF0000"),
+    BackgroundColor3 = Color3.fromHex("#000000"),
+    BackgroundTransparency = 0.2,
+    OutlineColor = Color3.fromHex("#FF0000"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+-- ========== 通用标签页 ==========
+Button(Tab1, "复制QQ群[获取最新消息]", function()
+    setclipboard("984820669")
+end)
+
+Tab1:Paragraph({
+    Title = "以下是常用功能",
+    Desc = [[ 👇👇👇👇]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#000000"),
+    BackgroundTransparency = 1,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+-- 玩家属性控制
+Slider(Tab1, "移动速度", 1, 600, game.Players.LocalPlayer.Character.Humanoid.WalkSpeed, function(a) 
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = a
+end)
+
+Slider(Tab1, "跳跃高度", 1, 600, game.Players.LocalPlayer.Character.Humanoid.JumpPower, function(a) 
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = a
+end)
+
+Slider(Tab1, "重力设置", 1, 500, workspace.Gravity, function(a) 
+    workspace.Gravity = a
+end)
+
+-- 特殊功能
+Toggle(Tab1, "穿墙", false, function(a)
+    pcall(function()
+        for i, v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = not a
+            end
+        end
+    end)
+end)
+
+Toggle(Tab1, "无限跳", false, function(Value)
+    getgenv().Jump = Value
+    game:GetService("UserInputService").JumpRequest:Connect(function()
+        if getgenv().Jump then
+            game.Players.LocalPlayer.Character.Humanoid:ChangeState("Jumping")
+        end
+    end)
+end)
+
+Toggle(Tab1, "夜视", false, function(a)
+    if a then
+        game.Lighting.Ambient = Color3.new(1, 1, 1)
+    else
+        game.Lighting.Ambient = Color3.new(0, 0, 0)
+    end
+end)
+
+-- 传送功能
+Button(Tab1, "点击传送工具", function() 
+    local mouse = game.Players.LocalPlayer:GetMouse()
+    local tool = Instance.new("Tool")
+    tool.RequiresHandle = false
+    tool.Name = "点击传送"
+    tool.Activated:connect(function()
+        local pos = mouse.Hit + Vector3.new(0, 2.5, 0)
+        pos = CFrame.new(pos.X, pos.Y, pos.Z)
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = pos
+    end)
+    tool.Parent = game.Players.LocalPlayer.Backpack
+end)
+
+-- 视野控制
+Button(Tab1, "最大视野缩放", function() 
+    game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = 200000
+end)
+
+Button(Tab1, "视野缩放128", function() 
+    game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = 128
+end)
+
+Slider(Tab1, "视野缩放距离", 1, 1500, game:GetService("Players").LocalPlayer.CameraMaxZoomDistance, function(a) 
+    game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = a
+end)
+
+Button(Tab1, "广角", function() 
+    Workspace.CurrentCamera.FieldOfView = 120
+end)
+
+Button(Tab1, "恢复视野", function() 
+    Workspace.CurrentCamera.FieldOfView = 70
+end)
+
+-- 飞行功能
+Tab1:Paragraph({
+    Title = "飞行功能",
+    Desc = [[ 👇👇👇👇]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#000000"),
+    BackgroundColor3 = Color3.fromHex("#000000"),
+    BackgroundTransparency = 0.2,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+Button(Tab1, "TeTraX飞行", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/smalldesikon/fdydyf/main/XION%20fly"))()
+end) 
+
+Button(Tab1, "TeTraX飞车", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/smalldesikon/fdydyf/main/XION%E9%A3%9E%E8%BD%A6"))()
+end)
+
+Button(Tab1, "飞行v4", function() 
+    loadstring(game:HttpGet("https://dpaste.org/PE88V/raw"))()
+end)
+
+-- 黑洞功能
+Tab1:Paragraph({
+    Title = "黑洞功能",
+    Desc = [[ 👇👇👇👇]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#000000"),
+    BackgroundColor3 = Color3.fromHex("#000000"),
+    BackgroundTransparency = 0.2,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+Button(Tab1, "双环控制黑洞", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ke9460394-dot/ugik/refs/heads/main/%E5%8F%8C%E7%8E%AF%E6%8E%A7%E5%88%B6%E9%BB%91%E6%B4%9E.txt"))()
+end)
+
+Button(Tab1, "可爱黑洞[英文]", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/hellohellohell012321/KAWAII-AURA/main/kawaii_aura.lua"))()
+end)
+
+Button(Tab1, "哥特风黑洞", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ke9460394-dot/ugik/refs/heads/main/%E5%93%A5%E7%89%B9%E9%A3%8E%E9%BB%91%E6%B4%9E.txt"))()
+end)
+
+-- FPS优化
+Tab1:Paragraph({
+    Title = "FPS优化",
+    Desc = [[ 👇👇👇👇]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#000000"),
+    BackgroundColor3 = Color3.fromHex("#000000"),
+    BackgroundTransparency = 0.2,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+Button(Tab1, "fpsBooster(提升fps)", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/JoshzzAlteregooo/JoshzzFpsBoosterVersion3/refs/heads/main/JoshzzNewFpsBooster"))()
+end)
+
+Button(Tab1, "fps显示", function() 
+    loadstring(game:HttpGet("https://pastefy.app/d9j82YJr/raw",true))()
+end)
+
+-- ========== ESP标签页 ==========
+local espEnabled = false
+local espObjects = {}
+local refreshConnection = nil
+
+local espSettings = {
+    showName = false,
+    showDistance = false,
+    showHealth = false,
+    showBox = false
+}
+
+function clearAllESP()
+    for player, objects in pairs(espObjects) do
+        for _, obj in pairs(objects) do
+            if obj and obj.Parent then
+                obj:Destroy()
+            end
+        end
+    end
+    espObjects = {}
+end
+
+function updateAllESP()
+    clearAllESP()
+    
+    if not espEnabled then
+        return
+    end
+    
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            -- 简化的ESP创建逻辑
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                -- 这里可以添加完整的ESP创建代码
+            end
+        end
+    end
+end
+
+Toggle(Tab2, "启用ESP总开关", false, function(value)
+    espEnabled = value
+    
+    if value then
+        updateAllESP()
+    else
+        clearAllESP()
+    end
+end)
+
+Toggle(Tab2, "显示玩家名称", false, function(value)
+    espSettings.showName = value
+    if espEnabled then
+        updateAllESP()
+    end
+end)
+
+Toggle(Tab2, "显示玩家距离", false, function(value)
+    espSettings.showDistance = value
+    if espEnabled then
+        updateAllESP()
+    end
+end)
+
+Toggle(Tab2, "显示玩家血量", false, function(value)
+    espSettings.showHealth = value
+    if espEnabled then
+        updateAllESP()
+    end
+end)
+
+Toggle(Tab2, "显示玩家方框", false, function(value)
+    espSettings.showBox = value
+    if espEnabled then
+        updateAllESP()
+    end
+end)
+
+-- ========== 自瞄标签页 ==========
+Button(Tab3, "陌自瞄（死亡消失）", function() 
+    loadstring(game:HttpGet("https://pastefy.app/ZYMlyhhz/raw",true))()
+end)
+
+Button(Tab3, "宙斯自瞄", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/chillz-workshop/main/Arceus%20Aimbot.lua"))()
+end)
+
+Button(Tab3, "英文自瞄", function() 
+    loadstring(game:HttpGet("https://rentry.co/n55gmtpi/raw", true))()
+end)
+
+Button(Tab3, "自瞄50", function() 
+    loadstring(game:HttpGet("https://pastefy.app/b3uXjRF6/raw",true))()
+end)
+
+Button(Tab3, "自瞄100", function() 
+    loadstring(game:HttpGet("https://pastefy.app/tQrd2r0L/raw",true))()
+end)
+
+Button(Tab3, "自瞄200", function() 
+    loadstring(game:HttpGet("https://pastefy.app/b5CuDuer/raw",true))()
+end)
+
+-- ========== 范围标签页 ==========
+_G.HitboxEnabled = false
+_G.HeadSize = 10
+_G.HitboxLoop = nil
+
+Input(Tabc, "自定义范围", "输入HitBox大小", "10", "例如: 20", function(Value)
+    local numValue = tonumber(Value)
+    if numValue then
+        _G.HeadSize = numValue
+        print("HitBox大小已设置为: " .. _G.HeadSize)
+    else
+        warn("请输入有效的数字")
+    end
+end)
+
+Toggle(Tabc, "启用自定义范围", false, function(Value)
+    _G.HitboxEnabled = Value
+    
+    if Value then
+        if _G.HitboxLoop then
+            _G.HitboxLoop:Disconnect()
+            _G.HitboxLoop = nil
+        end
+        
+        _G.HitboxLoop = game:GetService('RunService').RenderStepped:Connect(function()
+            if _G.HitboxEnabled then
+                for _, player in ipairs(game.Players:GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and player.Character then
+                        pcall(function()
+                            local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+                            if humanoidRootPart then
+                                humanoidRootPart.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+                                humanoidRootPart.Transparency = 0.7
+                                humanoidRootPart.BrickColor = BrickColor.new("Really red")
+                                humanoidRootPart.Material = "Neon"
+                                humanoidRootPart.CanCollide = false
+                            end
+                        end)
+                    end
+                end
+            end
+        end)
+        print("自定义范围已开启，大小: " .. _G.HeadSize)
+    else
+        if _G.HitboxLoop then
+            _G.HitboxLoop:Disconnect()
+            _G.HitboxLoop = nil
+        end
+        
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer and player.Character then
+                pcall(function()
+                    local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
+                    if humanoidRootPart then
+                        humanoidRootPart.Size = Vector3.new(2, 2, 1)
+                        humanoidRootPart.Transparency = 0
+                        humanoidRootPart.BrickColor = BrickColor.new("Medium stone grey")
+                        humanoidRootPart.Material = "Plastic"
+                    end
+                end)
+            end
+        end
+        print("自定义范围已关闭")
+    end
+end)
+
+-- ========== 子追标签页 ==========
+Button(Tab4, "HB 子追", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/HB-ksdb/-4/main/%E5%AD%90%E8%BF%BD%E8%84%9A%E6%9C%AC%E7%A9%BF%E5%A2%99.lua"))()
+end)
+
+Button(Tab4, "阿尔子追", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/dingding123hhh/sgbs/main/%E4%B8%81%E4%B8%81%20%E6%B1%89%E5%8C%96%E8%87%AA%E7%9E%84.txt"))()
+end)
+
+Button(Tab4, "俄州子追", function() 
+    loadstring(game:HttpGet("https://gist.githubusercontent.com/ClasiniZukov/e7547e7b48fa90d10eb7f85bd3569147/raw/f95cd3561a3bb3ac6172a14eb74233625b52e757/gistfile1.txt"))()
+end)
+
+-- ========== 各大脚本标签页 ==========
+Button(Tabjb, "殺脚本", function() 
+    FengYu_HUB = "殺脚本"
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/FengYu-3/FengYu/refs/heads/Feng/QQ1926190957"))()
+end)
+
+Button(Tabjb, "德与中山[免费版]", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/dream77239/Deyu-Zhongshan/refs/heads/main/%E5%BE%B7%E4%B8%8E%E4%B8%AD%E5%B1%B1.txt"))()
+end)
+
+Button(Tabjb, "皮脚本", function() 
+    getgenv().XiaoPi="皮脚本QQ群1002100032" 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+end)
+
+Button(Tabjb, "xa", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XingFork/Scripts/refs/heads/main/Loader"))()
+end)
+
+Button(Tabjb, "xk", function() 
+    loadstring(game:HttpGet(('https://github.com/devslopo/DVES/raw/main/XK%20Hub')))()
+end)
+
+Button(Tabjb, "混脚本", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/smalldesikon/wocaonima/main/sikon.txt"))()
+end)
+
+-- ========== 力量传奇标签页 ==========
+Button(Tab5, "汉化老外脚本", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/smalldesikon/vv/49b52c1e1f2a68d22ec0abec4b5d7068190056a9/w"))()
+end)
+
+Button(Tab5, "也是汉化老外", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/smalldesikon/vv/24873082e923de2afc31f715e71192ee80e405bb/%E5%8A%9B%E9%87%8F%E4%BC%A0%E5%A5%87%E6%9C%80%E5%BC%BA%E6%B5%8B%E8%AF%95.txt"))()
+end)
+
+-- ========== 忍者传奇标签页 ==========
+Button(Tab6, "挂机", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/ThatBlueDevil/Bleus/main/Ninja%20Legends/Source.lua"))()
+end)
+
+-- ========== 极速传奇标签页 ==========
+Button(Tab7, "刷经验", function() 
+    loadstring(game:HttpGet("https://pastebin.com/raw/9KWQXasx"))()
+end)
+
+-- ========== 墨水游戏标签页 ==========
+Button(Tab8, "好用但是英文", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/bored"))()
+end)
+
+Button(Tab8, "国人脚本", function() 
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Xingtaiduan/Script/refs/heads/main/Games/墨水游戏.lua"))()
+end)
+
+-- ========== 催更地点标签页 ==========
+Tabd:Paragraph({
+    Title = "联系我们",
+    Desc = [[ 如有问题请联系 ]],
+    Image = "eye",
+    ImageSize = 24,
+    Color = Color3.fromHex("#FFFFFF"),
+    BackgroundColor3 = Color3.fromHex("#000000"),
+    BackgroundTransparency = 0.2,
+    OutlineColor = Color3.fromHex("#FFFFFF"),
+    OutlineThickness = 1,
+    Padding = UDim.new(0, 1)
+})
+
+Button(Tabd, "复制QQ群号", function()
+    setclipboard("984820669")
+end)
+
+-- ========== 设置标签页 ==========
+Button(Tabb, "折叠UI", function()
+    Window:Close()
+end)
+
+Button(Tabb, "重置人物", function() 
+    game.Players.LocalPlayer.Character.Humanoid.Health = 0
+end)
+
+Button(Tabb, "重进服务器", function() 
+    game:GetService("TeleportService"):TeleportToPlaceInstance(
+        game.PlaceId,
+        game.JobId,
+        game:GetService("Players").LocalPlayer
+    )
+end)
+
+Button(Tabb, "离开服务器", function() 
+    game:Shutdown()
+end)
+
+-- ========== 初始化 ==========
+print("TeTraX作弊菜单已成功加载!")
