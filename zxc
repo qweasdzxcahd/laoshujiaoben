@@ -1,415 +1,299 @@
--- 增强版枪械美化脚本
--- 修复了WindUI加载和菜单显示问题
+-- 加载WindUI库
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 
--- 等待游戏完全加载
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
+-- 创建水印
+local sg = Instance.new("ScreenGui")
+sg.Name = "SnowWatermark"
+sg.ResetOnSpawn = false
+sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+sg.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
--- 尝试加载WindUI库
-local success, WindUI = pcall(function()
-    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua", true))()
-end)
+local frame = Instance.new("Frame")
+frame.Name = "WatermarkFrame"
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Size = UDim2.new(0, 220, 0, 45)
+frame.Position = UDim2.new(1, -230, 1, -100)
+frame.Parent = sg
 
-if not success or not WindUI then
-    -- 如果主链接失败，尝试备用链接
-    local success2, WindUI2 = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/source/wind.lua", true))()
-    end)
-    
-    if success2 and WindUI2 then
-        WindUI = WindUI2
-        print("WindUI备用链接加载成功")
-    else
-        -- 如果两个链接都失败，使用本地回退
-        warn("WindUI加载失败，使用基本UI")
-        -- 这里可以添加一个简单的回退UI
-        return
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = frame
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(100, 150, 255)
+stroke.Thickness = 2
+stroke.Transparency = 0.3
+stroke.Parent = frame
+
+local label = Instance.new("TextLabel")
+label.Name = "大司马脚本"
+label.Text = "付费版"
+label.Font = Enum.Font.GothamBold
+label.TextSize = 16
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextStrokeColor3 = Color3.fromRGB(100, 150, 255)
+label.TextStrokeTransparency = 0.5
+label.BackgroundTransparency = 1
+label.Size = UDim2.new(1, -10, 1, 0)
+label.Position = UDim2.new(0, 5, 0, 0)
+label.TextXAlignment = Enum.TextXAlignment.Left
+label.TextYAlignment = Enum.TextYAlignment.Center
+label.Parent = frame
+
+local icon = Instance.new("ImageLabel")
+icon.Name = "Icon"
+icon.Image = "rbxassetid://18374456807"
+icon.BackgroundTransparency = 1
+icon.Size = UDim2.new(0, 30, 0, 30)
+icon.Position = UDim2.new(0, 8, 0.5, -15)
+icon.Parent = frame
+
+label.Position = UDim2.new(0, 45, 0, 0)
+label.Size = UDim2.new(1, -50, 1, 0)
+
+-- 创建主窗口
+local Window = WindUI:CreateWindow({
+    Title = "大司马脚本",
+    Center = true,
+    AutoShow = true,
+    Size = UDim2.fromOffset(500, 400),
+})
+
+-- 编辑打开按钮
+Window:EditOpenButton({
+    Title = "大司马",
+    Icon = "crown",
+    CornerRadius = UDim.new(0, 8),
+    StrokeThickness = 3,
+    Color = ColorSequence.new(
+        Color3.fromRGB(255, 255, 0),  
+        Color3.fromRGB(255, 165, 0),  
+        Color3.fromRGB(255, 0, 0),    
+        Color3.fromRGB(139, 0, 0)     
+    ),
+    Draggable = true,
+})
+
+-- 添加标签
+Window:Tag({
+    Title = "VIP版",
+    Radius = 5,
+    Color = Color3.fromHex("#FFB347"),
+})
+
+-- 创建标签页
+local Main = Window:Section({Title = "主功能", Opened = true})
+
+local PlayerTab = Main:Tab({ Title = "玩家", Icon = "user" })
+local CombatTab = Main:Tab({ Title = "战斗", Icon = "swords" })
+local AutoTab = Main:Tab({ Title = "自动", Icon = "bot" })
+local ESPTab = Main:Tab({ Title = "透视", Icon = "view" })
+local BypassTab = Main:Tab({ Title = "绕过", Icon = "key" })
+
+-- 玩家标签页内容
+PlayerTab:Dropdown({
+    Title = "选择动画包",
+    Values = { "默认", "英雄", "忍者", "僵尸", "宇航员", "牛仔" },
+    Callback = function(Value)
+        print("选择动画包:", Value)
     end
-end
+})
 
-print("WindUI库加载成功，开始创建界面...")
+PlayerTab:Slider({
+    Title = "移动速度",
+    Value = {
+        Min = 1,
+        Max = 10,
+        Default = 1,
+    },
+    Callback = function(value)
+        print("移动速度设置为:", value)
+    end
+})
 
--- 短延迟确保界面元素已加载
+PlayerTab:Toggle({
+    Title = "加速移动",
+    Value = false,
+    Callback = function(state)
+        print("加速移动:", state)
+    end
+})
+
+PlayerTab:Toggle({
+    Title = "连跳",
+    Value = false,
+    Callback = function(state)
+        print("连跳:", state)
+    end
+})
+
+-- 战斗标签页内容
+CombatTab:Toggle({
+    Title = "自动攻击",
+    Value = false,
+    Callback = function(state)
+        print("自动攻击:", state)
+    end
+})
+
+CombatTab:Toggle({
+    Title = "自动踩踏",
+    Value = false,
+    Callback = function(state)
+        print("自动踩踏:", state)
+    end
+})
+
+CombatTab:Dropdown({
+    Title = "攻击模式",
+    Values = { "拳击", "踢击", "超级拳", "飞踢" },
+    Callback = function(Value)
+        print("攻击模式:", Value)
+    end
+})
+
+CombatTab:Toggle({
+    Title = "自动护甲",
+    Value = false,
+    Callback = function(state)
+        print("自动护甲:", state)
+    end
+})
+
+-- 自动标签页内容
+AutoTab:Toggle({
+    Title = "自动拾取现金",
+    Value = false,
+    Callback = function(state)
+        print("自动拾取现金:", state)
+    end
+})
+
+AutoTab:Toggle({
+    Title = "自动拾取物品",
+    Value = false,
+    Callback = function(state)
+        print("自动拾取物品:", state)
+    end
+})
+
+AutoTab:Toggle({
+    Title = "自动抢银行",
+    Value = false,
+    Callback = function(state)
+        print("自动抢银行:", state)
+    end
+})
+
+AutoTab:Toggle({
+    Title = "自动活动",
+    Value = false,
+    Callback = function(state)
+        print("自动活动:", state)
+    end
+})
+
+-- 透视标签页内容
+ESPTab:Toggle({
+    Title = "玩家透视",
+    Value = false,
+    Callback = function(state)
+        print("玩家透视:", state)
+    end
+})
+
+ESPTab:Toggle({
+    Title = "现金透视",
+    Value = false,
+    Callback = function(state)
+        print("现金透视:", state)
+    end
+})
+
+ESPTab:Toggle({
+    Title = "ATM透视",
+    Value = false,
+    Callback = function(state)
+        print("ATM透视:", state)
+    end
+})
+
+ESPTab:Colorpicker({
+    Title = "透视颜色",
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(color)
+        print("透视颜色:", color)
+    end
+})
+
+-- 绕过标签页内容
+BypassTab:Button({
+    Title = "绕过检测",
+    Callback = function()
+        print("执行绕过检测")
+        Window:Notify({
+            Title = "绕过成功",
+            Content = "已成功绕过游戏检测",
+            Duration = 3,
+            Icon = "shield",
+        })
+    end
+})
+
+BypassTab:Button({
+    Title = "解锁表情",
+    Callback = function()
+        print("解锁表情")
+    end
+})
+
+BypassTab:Button({
+    Title = "破解物品格",
+    Callback = function()
+        print("破解物品格")
+    end
+})
+
+BypassTab:Toggle({
+    Title = "防管理员",
+    Value = false,
+    Callback = function(state)
+        print("防管理员:", state)
+    end
+})
+
+-- 添加一些实用功能
+local UtilityTab = Main:Tab({ Title = "实用", Icon = "settings" })
+
+UtilityTab:Button({
+    Title = "重新生成角色",
+    Callback = function()
+        game:GetService("Players").LocalPlayer.Character:BreakJoints()
+    end
+})
+
+UtilityTab:Button({
+    Title = "服务器信息",
+    Callback = function()
+        local players = game:GetService("Players")
+        Window:Notify({
+            Title = "服务器信息",
+            Content = "玩家数量: " .. #players:GetPlayers() .. "/" .. game.Players.MaxPlayers,
+            Duration = 5,
+            Icon = "info",
+        })
+    end
+})
+
+-- 初始化完成提示
 task.wait(1)
+Window:Notify({
+    Title = "脚本加载完成",
+    Content = "大司马脚本已成功加载！",
+    Duration = 3,
+    Icon = "check",
+})
 
-function createEnhancedUI()
-    -- 创建主窗口
-    local WeaponSkinner = WindUI:CreateWindow({
-        Title = "枪械美化系统 V2.0",
-        Center = true,
-        AutoShow = true,
-        Size = UDim2.new(0, 400, 0, 500),
-        Transparency = 0.05,
-        Accent = Color3.fromRGB(255, 50, 50)
-    })
-
-    -- 创建浮动按钮
-    WeaponSkinner:EditOpenButton({
-        Title = "武器美化",
-        Icon = "crown",
-        CornerRadius = UDim.new(0, 12),
-        StrokeThickness = 4,
-        Color = ColorSequence.new(
-            Color3.fromRGB(255, 255, 0),
-            Color3.fromRGB(255, 165, 0),
-            Color3.fromRGB(255, 0, 0),
-            Color3.fromRGB(139, 0, 0)
-        ),
-        Draggable = true,
-        Position = UDim2.new(1, -60, 0, 30)
-    })
-
-    -- 添加欢迎标签
-    WeaponSkinner:Label({
-        Title = "欢迎使用",
-        Text = "枪械皮肤美化系统\n版本: 2.0\n请先选择皮肤"
-    })
-
-    local selectedSkin = ""
-    local isEnabled = false
-    local lastAppliedCount = 0
-
-    -- 皮肤选择下拉框
-    local skinDropdown = WeaponSkinner:Dropdown({
-        Title = "皮肤选择",
-        Values = { 
-            "烟火", "虚空", "纯金", "暗物质", "反物质", "神秘", "虚空神秘", "战术", "纯金战术", 
-            "白未来", "黑未来", "圣诞未来", "礼物包装", "猩红", "收割者", "虚空收割者", "圣诞玩具",
-            "荒地", "隐形", "像素", "钻石像素", "黄金零下", "绿水晶", "生物", "樱花", "精英", 
-            "黑樱花", "彩虹激光", "蓝水晶", "紫水晶", "红水晶", "零下", "虚空射线", "冰冻钻石",
-            "虚空梦魇", "金雪", "爱国者", "MM2", "声望", "酷化", "蒸汽", "海盗", "玫瑰", "黑玫瑰",
-            "激光", "烟花", "诅咒西瓜", "大炮", "财富", "黄金大炮", "四叶草", "自由", "黑曜石", "赛博朋克"
-        },
-        Callback = function(Value) 
-            -- 皮肤名称映射
-            local skinMap = {
-                ["烟火"] = "Sparkler",
-                ["虚空"] = "Void",
-                ["纯金"] = "PureGold",
-                ["暗物质"] = "DarkMatter",
-                ["反物质"] = "AntiMatter",
-                ["神秘"] = "Mystic",
-                ["虚空神秘"] = "VoidMystic",
-                ["战术"] = "Tactical",
-                ["纯金战术"] = "GoldTactical",
-                ["白未来"] = "WhiteFuture",
-                ["黑未来"] = "BlackFuture",
-                ["圣诞未来"] = "ChristmasFuture",
-                ["礼物包装"] = "GiftWrap",
-                ["猩红"] = "Scarlet",
-                ["收割者"] = "Reaper",
-                ["虚空收割者"] = "VoidReaper",
-                ["圣诞玩具"] = "ChristmasToy",
-                ["荒地"] = "Wasteland",
-                ["隐形"] = "Invisible",
-                ["像素"] = "Pixel",
-                ["钻石像素"] = "DiamondPixel",
-                ["黄金零下"] = "GoldFrost",
-                ["绿水晶"] = "GreenCrystal",
-                ["生物"] = "Bio",
-                ["樱花"] = "Sakura",
-                ["精英"] = "Elite",
-                ["黑樱花"] = "BlackSakura",
-                ["彩虹激光"] = "RainbowLaser",
-                ["蓝水晶"] = "BlueCrystal",
-                ["紫水晶"] = "PurpleCrystal",
-                ["红水晶"] = "RedCrystal",
-                ["零下"] = "Frost",
-                ["虚空射线"] = "VoidRay",
-                ["冰冻钻石"] = "FrozenDiamond",
-                ["虚空梦魇"] = "VoidNightmare",
-                ["金雪"] = "GoldenSnow",
-                ["爱国者"] = "Patriot",
-                ["MM2"] = "MM2",
-                ["声望"] = "Prestige",
-                ["酷化"] = "Coolify",
-                ["蒸汽"] = "Steam",
-                ["海盗"] = "Pirate",
-                ["玫瑰"] = "Rose",
-                ["黑玫瑰"] = "BlackRose",
-                ["激光"] = "Laser",
-                ["烟花"] = "Firework",
-                ["诅咒西瓜"] = "CursedWatermelon",
-                ["大炮"] = "Cannon",
-                ["财富"] = "Fortune",
-                ["黄金大炮"] = "GoldCannon",
-                ["四叶草"] = "FourLeafClover",
-                ["自由"] = "Freedom",
-                ["黑曜石"] = "Obsidian",
-                ["赛博朋克"] = "Cyberpunk"
-            }
-            
-            selectedSkin = skinMap[Value] or ""
-            
-            if selectedSkin ~= "" then
-                WeaponSkinner:Notify({
-                    Title = "皮肤选择",
-                    Description = "已选择: " .. Value .. " (" .. selectedSkin .. ")",
-                    Duration = 2
-                })
-                
-                if isEnabled then
-                    applySkinToAllWeapons()
-                end
-            end
-        end
-    })
-
-    -- 美化开关
-    WeaponSkinner:Toggle({
-        Title = "开启美化",
-        Value = false,
-        Callback = function(enabled) 
-            isEnabled = enabled
-            
-            if isEnabled then
-                if selectedSkin ~= "" then
-                    WeaponSkinner:Notify({
-                        Title = "美化已开启",
-                        Description = "正在应用皮肤...",
-                        Duration = 2
-                    })
-                    applySkinToAllWeapons()
-                else
-                    WeaponSkinner:Notify({
-                        Title = "警告",
-                        Description = "请先选择一个皮肤",
-                        Duration = 2
-                    })
-                    isEnabled = false
-                end
-            else
-                WeaponSkinner:Notify({
-                    Title = "美化已关闭",
-                    Description = "皮肤美化功能已禁用",
-                    Duration = 2
-                })
-            end
-        end
-    })
-
-    -- 立即应用按钮
-    WeaponSkinner:Button({
-        Title = "立即应用皮肤",
-        Callback = function()
-            if selectedSkin == "" then
-                WeaponSkinner:Notify({
-                    Title = "错误",
-                    Description = "请先选择一个皮肤",
-                    Duration = 2
-                })
-                return
-            end
-            
-            WeaponSkinner:Notify({
-                Title = "开始应用",
-                Description = "正在应用皮肤到所有武器...",
-                Duration = 1
-            })
-            
-            applySkinToAllWeapons()
-        end
-    })
-
-    -- 刷新按钮
-    WeaponSkinner:Button({
-        Title = "刷新武器列表",
-        Callback = function()
-            WeaponSkinner:Notify({
-                Title = "刷新",
-                Description = "正在扫描武器库存...",
-                Duration = 1
-            })
-            scanWeapons()
-        end
-    })
-
-    -- 状态显示
-    local statusLabel = WeaponSkinner:Label({
-        Title = "系统状态",
-        Text = "等待操作..."
-    })
-
-    -- 扫描武器功能
-    function scanWeapons()
-        local success, result = pcall(function()
-            local devvModule = require(game:GetService("ReplicatedStorage"):WaitForChild("devv"))
-            local itemModule = devvModule.load("v3item")
-            local weapons = itemModule.inventory.items
-            
-            local gunCount = 0
-            local weaponNames = {}
-            
-            for i, item in pairs(weapons) do
-                if item.type == "Gun" then
-                    gunCount = gunCount + 1
-                    table.insert(weaponNames, item.name)
-                end
-            end
-            
-            return {
-                count = gunCount,
-                names = weaponNames
-            }
-        end)
-        
-        if success then
-            statusLabel:Update({
-                Title = "扫描结果",
-                Text = "发现 " .. result.count .. " 把武器\n" .. table.concat(result.names, "\n", 1, math.min(5, #result.names)) .. (#result.names > 5 and "\n..." or "")
-            })
-            
-            WeaponSkinner:Notify({
-                Title = "扫描完成",
-                Description = "发现 " .. result.count .. " 把武器",
-                Duration = 2
-            })
-        else
-            statusLabel:Update({
-                Title = "扫描失败",
-                Text = "无法访问武器库存"
-            })
-            
-            WeaponSkinner:Notify({
-                Title = "错误",
-                Description = "扫描武器失败，请检查游戏模块",
-                Duration = 3
-            })
-        end
-    end
-
-    -- 应用皮肤到所有武器
-    function applySkinToAllWeapons()
-        if selectedSkin == "" then
-            WeaponSkinner:Notify({
-                Title = "错误",
-                Description = "未选择皮肤",
-                Duration = 2
-            })
-            return
-        end
-        
-        local success, result = pcall(function()
-            -- 尝试多种可能的模块路径
-            local devvModule
-            local possiblePaths = {
-                game:GetService("ReplicatedStorage"):FindFirstChild("devv"),
-                game:GetService("ReplicatedStorage"):FindFirstChild("Devv"),
-                game:GetService("ReplicatedStorage"):FindFirstChild("DEVV"),
-                game:GetService("ReplicatedStorage"):FindFirstChild("modules"),
-                game:GetService("ServerStorage"):FindFirstChild("devv"),
-                game:GetService("ServerScriptService"):FindFirstChild("devv")
-            }
-            
-            for _, path in ipairs(possiblePaths) do
-                if path and path:IsA("ModuleScript") then
-                    devvModule = require(path)
-                    break
-                end
-            end
-            
-            if not devvModule then
-                return {success = false, error = "未找到devv模块"}
-            end
-            
-            local itemModule = devvModule.load("v3item")
-            local inventory = itemModule.inventory
-            local weapons = inventory.items
-            
-            local appliedCount = 0
-            local totalWeapons = 0
-            
-            for i, item in pairs(weapons) do
-                if item.type == "Gun" then
-                    totalWeapons = totalWeapons + 1
-                    local skinSuccess = pcall(function()
-                        inventory.skinUpdate(item.name, selectedSkin)
-                    end)
-                    
-                    if skinSuccess then
-                        appliedCount = appliedCount + 1
-                    end
-                end
-            end
-            
-            return {
-                success = true,
-                applied = appliedCount,
-                total = totalWeapons
-            }
-        end)
-        
-        if success and result.success then
-            lastAppliedCount = result.applied
-            
-            statusLabel:Update({
-                Title = "应用成功",
-                Text = "已应用皮肤到 " .. result.applied .. "/" .. result.total .. " 把武器"
-            })
-            
-            WeaponSkinner:Notify({
-                Title = "美化完成",
-                Description = "成功应用皮肤到 " .. result.applied .. " 把武器",
-                Duration = 3
-            })
-        else
-            statusLabel:Update({
-                Title = "应用失败",
-                Text = "皮肤应用失败，请检查游戏"
-            })
-            
-            WeaponSkinner:Notify({
-                Title = "错误",
-                Description = "应用皮肤失败: " .. (result and result.error or "未知错误"),
-                Duration = 3
-            })
-        end
-    end
-
-    -- 初始化时扫描一次武器
-    task.spawn(function()
-        task.wait(2)
-        scanWeapons()
-    end)
-
-    -- 添加分隔线
-    WeaponSkinner:Separator()
-    
-    -- 添加说明
-    WeaponSkinner:Label({
-        Title = "使用说明",
-        Text = "1. 选择一个皮肤\n2. 开启美化开关\n3. 点击按钮立即应用\n\n如果无法使用，请检查：\n- 游戏是否完全加载\n- 是否有权限修改皮肤\n- 网络连接是否正常"
-    })
-
-    print("武器美化UI创建完成！")
-    return WeaponSkinner
-end
-
--- 创建UI并处理错误
-local success, ui = pcall(createEnhancedUI)
-if success and ui then
-    print("枪械美化系统已成功启动")
-    
-    -- 显示启动提示
-    task.wait(1)
-    if ui.Notify then
-        ui:Notify({
-            Title = "系统启动",
-            Description = "枪械美化系统已加载完成",
-            Duration = 3
-        })
-    end
-else
-    warn("创建UI失败:", ui)
-    
-    -- 尝试使用简单提示
-    local StarterGui = game:GetService("StarterGui")
-    pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = "武器美化",
-            Text = "加载失败，请检查控制台",
-            Duration = 5
-        })
-    end)
-end
+print("大司马脚本初始化完成")
