@@ -1,0 +1,184 @@
+local rs = game:GetService("ReplicatedStorage")
+local plrs = game:GetService("Players")
+local lp = plrs.LocalPlayer
+local cam = workspace.CurrentCamera
+local uis = game:GetService("UserInputService")
+
+local remotes = rs:WaitForChild("Remotes")
+local playAudio = remotes:WaitForChild("PlayAudio")
+local visBullet = remotes:WaitForChild("VisualizeBullet")
+local inflict = remotes:WaitForChild("InflictTarget")
+
+local modules = rs:WaitForChild("Modules")
+local encoder = require(modules.Shared:WaitForChild("Encoder"))
+
+local miscs = rs:WaitForChild("Miscs")
+local hitFx = miscs.GunVisualEffects.Common.HitEffect
+local bloodFx = miscs.GunVisualEffects.Common.BloodEffect
+local muzzleFx = miscs.GunVisualEffects.Common.MuzzleEffect
+local explodeFx = miscs.GunVisualEffects.Common.ExplosionEffect
+
+local cfg = { enabled = false, shootId = 0 }
+local attacked = {}
+local monsters = workspace:WaitForChild("Monsters")
+local hiddenBoxes = workspace:WaitForChild("HiddenWeaponBoxes")
+
+local function getChar() return lp.Character end
+local function getHrp()
+    local c = getChar()
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+local function getTool()
+    local c = getChar()
+    if not c then return nil end
+    local tool = c:FindFirstChildOfClass("Tool")
+    if tool then return tool end
+    for _, t in next, lp.Backpack:GetChildren() do
+        if t:IsA("Tool") then return t end
+    end
+    return nil
+end
+
+local function tpToGun()
+    local hrp = getHrp()
+    if not hrp then return end
+    local best, bestDist = nil, math.huge
+    for _, box in next, hiddenBoxes:GetChildren() do
+        local part = box:IsA("BasePart") and box or box:FindFirstChildWhichIsA("BasePart", true)
+        if part then
+            local d = (part.Position - hrp.Position).Magnitude
+            if d < bestDist then
+                bestDist = d
+                best = part
+            end
+        end
+    end
+    if best then
+        hrp.CFrame = best.CFrame + Vector3.new(0, 3, 0)
+    end
+end
+
+local function fireNPC(npc)
+    local tool = getTool()
+    if not tool then return end
+    local hum = npc:FindFirstChildOfClass("Humanoid")
+    local hrp = npc:FindFirstChild("HumanoidRootPart")
+    local head = npc:FindFirstChild("Head")
+    if not hum or not hrp then return end
+    if hum.Health <= 0 then return end
+    local hitP = head or hrp
+    local dir = (hitP.Position - cam.CFrame.p).Unit
+    local handle = tool:FindFirstChild("Handle")
+    if not handle then return end
+    local firePt = handle:FindFirstChild("GunFirePoint1")
+    local muzzlePt = handle:FindFirstChild("GunMuzzlePoint1")
+    local fireSnd = handle:FindFirstChild("FireSounds")
+    local snd = fireSnd and fireSnd:FindFirstChild("FireSound")
+    local muzzle = handle:FindFirstChild("GunMuzzlePoint1")
+    if snd and muzzle then
+        playAudio:FireServer({Echo=true,DistantSoundVolume=1.5,Silenced=true,Instance=snd,Origin=muzzle,DistantSoundIds={177174605}},nil,true)
+    end
+    if firePt and muzzlePt then
+        local miscData = {ChargeLevel=0,ExplosionEffectFolder=explodeFx,MuzzleFolder=muzzleFx,HitEffectFolder=hitFx,BloodEffectFolder=bloodFx}
+        visBullet:FireServer(tool,handle,{dir},{dir},firePt,muzzlePt,miscData)
+    end
+    cfg.shootId = cfg.shootId + 1
+    local dist = (hrp.Position - cam.CFrame.p).Magnitude
+    local miscData = {ChargeLevel=0,ExplosionEffectFolder=explodeFx,MuzzleFolder=muzzleFx,HitEffectFolder=hitFx,BloodEffectFolder=bloodFx}
+    inflict:FireServer(encoder.encode(cfg.shootId),hrp.Position,"Gun",tool,hum,hrp,hitP,hitP.Size,miscData,dist)
+end
+
+local sg = Instance.new("ScreenGui")
+sg.Name = "NK"
+sg.ResetOnSpawn = false
+sg.Parent = lp:WaitForChild("PlayerGui")
+
+local main = Instance.new("Frame")
+main.Size = UDim2.new(0,140,0,80)
+main.Position = UDim2.new(0.02,0,0.3,0)
+main.BackgroundColor3 = Color3.fromRGB(18,18,22)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+main.Parent = sg
+
+Instance.new("UICorner",main).CornerRadius = UDim.new(0,6)
+
+local killBtn = Instance.new("TextButton")
+killBtn.Size = UDim2.new(1,-8,0,30)
+killBtn.Position = UDim2.new(0,4,0,4)
+killBtn.BackgroundColor3 = Color3.fromRGB(80,80,90)
+killBtn.BorderSizePixel = 0
+killBtn.Text = "KILL: OFF"
+killBtn.TextColor3 = Color3.fromRGB(240,240,240)
+killBtn.TextSize = 12
+killBtn.Font = Enum.Font.GothamBold
+killBtn.Parent = main
+Instance.new("UICorner",killBtn).CornerRadius = UDim.new(0,4)
+
+killBtn.MouseButton1Click:Connect(function()
+    cfg.enabled = not cfg.enabled
+    killBtn.BackgroundColor3 = cfg.enabled and Color3.fromRGB(60,180,80) or Color3.fromRGB(80,80,90)
+    killBtn.Text = cfg.enabled and "KILL: ON" or "KILL: OFF"
+    if not cfg.enabled then attacked = {} end
+end)
+
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(1,-8,0,30)
+tpBtn.Position = UDim2.new(0,4,0,38)
+tpBtn.BackgroundColor3 = Color3.fromRGB(60,100,160)
+tpBtn.BorderSizePixel = 0
+tpBtn.Text = "TP to Gun"
+tpBtn.TextColor3 = Color3.fromRGB(240,240,240)
+tpBtn.TextSize = 12
+tpBtn.Font = Enum.Font.GothamBold
+tpBtn.Parent = main
+Instance.new("UICorner",tpBtn).CornerRadius = UDim.new(0,4)
+
+tpBtn.MouseButton1Click:Connect(tpToGun)
+
+local function getSortedNPCs()
+    local hrp = getHrp()
+    if not hrp then return {} end
+    local t = {}
+    for _, npc in next, monsters:GetChildren() do
+        local hum = npc:FindFirstChildOfClass("Humanoid")
+        local nhrp = npc:FindFirstChild("HumanoidRootPart")
+        if hum and hum.Health > 0 and nhrp then
+            table.insert(t, {npc = npc, dist = (nhrp.Position - hrp.Position).Magnitude})
+        end
+    end
+    table.sort(t, function(a, b) return a.dist < b.dist end)
+    return t
+end
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if cfg.enabled then
+            local sorted = getSortedNPCs()
+            for _, entry in next, sorted do
+                local npc = entry.npc
+                local id = npc:GetFullName()
+                local hum = npc:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 and not attacked[id] then
+                    attacked[id] = true
+                    task.spawn(function()
+                        while cfg.enabled and npc.Parent and hum and hum.Health > 0 do
+                            fireNPC(npc)
+                            task.wait(0.02)
+                        end
+                        attacked[id] = nil
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+uis.InputBegan:Connect(function(k,g)
+    if g then return end
+    if k.KeyCode == Enum.KeyCode.RightShift then
+        sg.Enabled = not sg.Enabled
+    end
+end)
