@@ -1,6 +1,6 @@
 return {
     {Name = "Kick", Cmd = "kick", Type = "button", Group = "Commands", AuthorOnly = true},
-    {Name = "Kill", Cmd = "kill", Type = "button", Group = "Commands"},
+    {Name = "Kill", Cmd = "kill", Type = "button", Group = "Commands", AuthorOnly = true},
     {Name = "Disable All", Cmd = "gb", Type = "button", Group = "Commands"},
     {Name = "Reload", Cmd = "fr", Type = "button", Group = "Commands"},
     {Name = "Toggle Sit", Cmd = "sit", Type = "button", Group = "Commands"},
@@ -30,7 +30,6 @@ return {
     {Name = "Ring", Cmd = "ring", Type = "toggle", Group = "Commands"},
     {Name = "Thunder", Cmd = "thunder", Type = "toggle", Group = "Commands"},
     {Name = "Confetti", Cmd = "confetti", Type = "button", Group = "Commands"},
-    {Name = "Lightning", Cmd = "lightning", Type = "button", Group = "Commands"},
     {Name = "Meteor", Cmd = "meteor", Type = "button", Group = "Commands"},
     {Name = "Coords", Cmd = "coords", Type = "toggle", Group = "Commands"},
     {Name = "RJ", Cmd = "rj", Type = "button", Group = "Commands", AuthorOnly = true},
