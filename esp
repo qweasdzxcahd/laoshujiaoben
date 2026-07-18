@@ -1,0 +1,177 @@
+return function(Deps)
+    local plrs = Deps.Players
+    local lp = Deps.LocalPlayer
+    local coregui = Deps.CoreGui
+    local cfg = Deps.Config
+    local isAdmin = Deps.IsAdmin
+    local isAuthor = Deps.IsAuthor
+    local runs = Deps.RunService
+    local debris = Deps.Debris
+
+    local SilkscreenFont = Font.new("rbxassetid://12187371840")
+    local CONFIG = {Rate_Active = 1/12, Rate_Idle = 1, ContentRate = 1/14, StrokeThickness = 0.8, DistOffset = Vector3.new(0, -5.5, 0), NameOffset = Vector3.new(0, 5, 0), VelocityThreshold = 0.5}
+    local ESPEnabled = false
+    local LastVisualUpdate, LastContentUpdate = 0, 0
+    local espSets = {enabled = false, outline = true, inline = true, outCol = Color3.fromRGB(255,255,255), inCol = Color3.fromRGB(0,0,0), outAlpha = 0.5, inAlpha = 0.2, outSize = 0.1, inSize = 0.05}
+    local bodyParts = {"Head","Torso","Left Arm","Right Arm","Left Leg","Right Leg","UpperTorso","LowerTorso","LeftUpperArm","LeftLowerArm","LeftHand","RightUpperArm","RightLowerArm","RightHand","LeftUpperLeg","LeftLowerLeg","LeftFoot","RightUpperLeg","RightLowerLeg","RightFoot"}
+    local BoxESP = { Boxes = {}, Conn = {} }
+
+    local function clearBoxes(p) if BoxESP.Boxes[p] then for _,b in next,BoxESP.Boxes[p] do b:Destroy() end; BoxESP.Boxes[p]=nil end end
+    local function createAdorn(class, part, name, z, color, alpha, size)
+        local a = Instance.new(class); a.Name=name; a.Adornee=part; a.AlwaysOnTop=true; a.ZIndex=z; a.Color3=color; a.Transparency=alpha; a.Parent=coregui
+        if class=="BoxHandleAdornment" then a.Size=size else a.Height=size.Y; a.Radius=size.X; a.CFrame=CFrame.Angles(math.rad(90),0,0) end
+        return a
+    end
+    local function updatePlayerBoxes(p)
+        if not p or not espSets.enabled then clearBoxes(p) return end
+        local char = p.Character; if not char or not char:FindFirstChildOfClass("Humanoid") then return end
+        clearBoxes(p); BoxESP.Boxes[p]={}
+        for _, pn in next,bodyParts do
+            local obj = char:FindFirstChild(pn)
+            if obj and obj:IsA("BasePart") then
+                if obj.Name=="Head" then
+                    local s=(obj.Size.X/2)*0.6
+                    if espSets.outline then table.insert(BoxESP.Boxes[p], createAdorn("CylinderHandleAdornment",obj,"out",-1,espSets.outCol,espSets.outAlpha,Vector2.new(s+espSets.outSize,obj.Size.Z+espSets.outSize))) end
+                    if espSets.inline then table.insert(BoxESP.Boxes[p], createAdorn("CylinderHandleAdornment",obj,"in", 1,espSets.inCol,espSets.inAlpha,Vector2.new(s+espSets.inSize,obj.Size.Z+espSets.inSize))) end
+                else
+                    if espSets.outline then table.insert(BoxESP.Boxes[p], createAdorn("BoxHandleAdornment",obj,"out",-1,espSets.outCol,espSets.outAlpha,obj.Size+Vector3.new(espSets.outSize,espSets.outSize,espSets.outSize))) end
+                    if espSets.inline then table.insert(BoxESP.Boxes[p], createAdorn("BoxHandleAdornment",obj,"in", 1,espSets.inCol,espSets.inAlpha,obj.Size+Vector3.new(espSets.inSize,espSets.inSize,espSets.inSize))) end
+                end
+            end
+        end
+    end
+    local function refreshAllESP() for _,p in next,plrs:GetPlayers() do updatePlayerBoxes(p) end end
+
+    local function GetCustomTag(char, tagName, offset)
+        local tag = char:FindFirstChild(tagName)
+        if not tag then
+            local head = char:FindFirstChild("Head"); local root = char:FindFirstChild("HumanoidRootPart"); local adorn = head or root
+            if not adorn then return nil end
+            tag = Instance.new("BillboardGui"); tag.Name = tagName; tag.AlwaysOnTop = true; tag.Size = UDim2.new(0, 200, 0, 36); tag.StudsOffset = Vector3.new(0, 0.6, 0); tag.StudsOffsetWorldSpace = Vector3.new(0, 0, 0); tag.Enabled = false
+            local nameL = Instance.new("TextLabel"); nameL.Name = "L"; nameL.BackgroundTransparency = 1; nameL.Size = UDim2.new(1, 0, 0.5, 0); nameL.Position = UDim2.new(0, 0, 0, 0); nameL.TextColor3 = Color3.new(1,1,1); nameL.FontFace = SilkscreenFont; nameL.TextSize = 7; nameL.TextXAlignment = Enum.TextXAlignment.Center
+            local s1 = Instance.new("UIStroke"); s1.Thickness = CONFIG.StrokeThickness; s1.Color = Color3.new(0,0,0); s1.Parent = nameL; nameL.Parent = tag
+            local distL = Instance.new("TextLabel"); distL.Name = "DL"; distL.BackgroundTransparency = 1; distL.Size = UDim2.new(1, 0, 0.5, 0); distL.Position = UDim2.new(0, 0, 0.5, 0); distL.TextColor3 = Color3.fromRGB(200, 200, 200); distL.FontFace = SilkscreenFont; distL.TextSize = 7; distL.TextXAlignment = Enum.TextXAlignment.Center
+            local s2 = Instance.new("UIStroke"); s2.Thickness = CONFIG.StrokeThickness; s2.Color = Color3.new(0,0,0); s2.Parent = distL; distL.Parent = tag
+            local hpTag = Instance.new("BillboardGui"); hpTag.Name = "CAT_HPTag"; hpTag.AlwaysOnTop = true; hpTag.Size = UDim2.new(0, 60, 0, 20); hpTag.StudsOffset = Vector3.new(-2.5, 0, 0); hpTag.Enabled = false
+            local hpL = Instance.new("TextLabel"); hpL.Name = "L"; hpL.BackgroundTransparency = 1; hpL.Size = UDim2.new(1,0,1,0); hpL.TextColor3 = Color3.new(1,1,1); hpL.FontFace = SilkscreenFont; hpL.TextSize = 7; hpL.TextXAlignment = Enum.TextXAlignment.Center
+            local sHP = Instance.new("UIStroke"); sHP.Thickness = CONFIG.StrokeThickness; sHP.Color = Color3.new(0,0,0); sHP.Parent = hpL; hpL.Parent = hpTag; hpTag.Parent = char; hpTag.Adornee = root
+            tag.Parent = char; tag.Adornee = adorn
+        end
+        return tag
+    end
+
+    local function setupESPForPlayer(p)
+        if p == lp then return end
+        local function onChar(char)
+            task.wait(0.5)
+            GetCustomTag(char, "CAT_NameTag", CONFIG.NameOffset)
+        end
+        p.CharacterAdded:Connect(onChar)
+        if p.Character then task.spawn(onChar, p.Character) end
+    end
+    for _, p in next, plrs:GetPlayers() do setupESPForPlayer(p) end
+    plrs.PlayerAdded:Connect(setupESPForPlayer)
+
+    runs.Heartbeat:Connect(function()
+        local myChar = lp.Character; local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if not myRoot then return end
+        if not ESPEnabled then
+            for _, player in next, plrs:GetPlayers() do
+                if player.Character then
+                    local ch = player.Character
+                    local tag = ch:FindFirstChild("CAT_NameTag")
+                    if tag then tag.Enabled = false end
+                    local hpTag = ch:FindFirstChild("CAT_HPTag")
+                    if hpTag then hpTag.Enabled = false end
+                end
+            end
+            return
+        end
+        local now = tick()
+        local myPos = myRoot.Position
+        local isMoving = myRoot.Velocity.Magnitude > CONFIG.VelocityThreshold
+        local rate = isMoving and CONFIG.Rate_Active or CONFIG.Rate_Idle
+        if now - LastVisualUpdate >= rate then
+            LastVisualUpdate = now
+            for _, player in next, plrs:GetPlayers() do
+                if player ~= lp and player.Character then
+                    local ch = player.Character; local h = ch:FindFirstChildOfClass("Humanoid")
+                    local alive = h and h.Health > 0
+                    local tag = ch:FindFirstChild("CAT_NameTag")
+                    if tag then
+                        tag.Enabled = alive
+                        local nameL = tag:FindFirstChild("L")
+                        if nameL and alive then
+                            if cfg.wlPlrs[player.Name] then nameL.TextColor3 = Color3.fromRGB(135,206,235)
+                            elseif cfg.selPlrs[player.Name] then nameL.TextColor3 = Color3.fromRGB(255,0,0)
+                            else nameL.TextColor3 = Color3.fromRGB(255,255,255) end
+                            local txt = player.Name
+                            if isAuthor(player) then txt = txt .. " [AUTHOR]"
+                            elseif isAdmin(player) then txt = txt .. " [ZMR]" end
+                            nameL.Text = txt
+                        end
+                        local distL = tag:FindFirstChild("DL")
+                        if distL then distL.Visible = alive end
+                    end
+                    local hpTag = ch:FindFirstChild("CAT_HPTag")
+                    if hpTag then
+                        local scaledHP = h and math.ceil(h.Health * (100/115)) or 0
+                        local showHP = alive and scaledHP < 100
+                        hpTag.Enabled = showHP
+                        if showHP then
+                            local l = hpTag:FindFirstChild("L")
+                            if l then l.Text = tostring(scaledHP) end
+                        end
+                    end
+                end
+            end
+        end
+        if now - LastContentUpdate >= CONFIG.ContentRate then
+            LastContentUpdate = now
+            for _, player in next, plrs:GetPlayers() do
+                if player.Character then
+                    local tag = player.Character:FindFirstChild("CAT_NameTag")
+                    if tag and tag.Enabled then
+                        local nameL = tag:FindFirstChild("L")
+                        local distL = tag:FindFirstChild("DL")
+                        local tr = player.Character:FindFirstChild("HumanoidRootPart")
+                        if nameL and nameL.Visible then
+                            local txt = player.Name
+                            if isAuthor(player) then txt = txt .. " [AUTHOR]"
+                            elseif isAdmin(player) then txt = txt .. " [ZMR]" end
+                            nameL.Text = txt
+                        end
+                        if distL and distL.Visible and tr then
+                            distL.Text = math.floor((myPos-tr.Position).Magnitude).."M"
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    local M = {}
+    M.Sets = espSets
+    M.Enabled = ESPEnabled
+    M.Toggle = function(v)
+        ESPEnabled = v
+        espSets.enabled = v
+        if not v then
+            if BoxESP.Conn.M then BoxESP.Conn.M:Disconnect() end
+            for _,c in next,BoxESP.Conn do if typeof(c)=="RBXScriptConnection" then c:Disconnect() end end
+            for p in next,BoxESP.Boxes do clearBoxes(p) end; BoxESP = {Boxes={},Conn={}}
+        else
+            local function s(p)
+                if p == lp then return end
+                BoxESP.Conn[p] = p.CharacterAdded:Connect(function() task.wait(0.5); updatePlayerBoxes(p) end)
+                if p.Character then updatePlayerBoxes(p) end
+            end
+            for _,p in next,plrs:GetPlayers() do s(p) end
+            BoxESP.Conn.M = plrs.PlayerAdded:Connect(s)
+        end
+    end
+    M.RefreshColors = function()
+        if espSets.enabled then refreshAllESP() end
+    end
+    return M
+end
