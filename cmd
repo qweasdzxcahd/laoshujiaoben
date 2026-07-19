@@ -43,12 +43,9 @@ return {
     {Name = "Say", Cmd = "say", Type = "input", Group = "Commands", InputDefault = ""},
     {Name = "Force Rage", Cmd = "forcerage", Type = "toggle", Group = "Remote"},
     {Name = "Force ESP", Cmd = "forceesp", Type = "toggle", Group = "Remote"},
-    {Name = "Force TPWalk", Cmd = "forcetpwalk", Type = "toggle", Group = "Remote"},
     {Name = "Force Desync", Cmd = "forcedesync", Type = "toggle", Group = "Remote"},
     {Name = "Force LuanFei", Cmd = "forceluanfei", Type = "toggle", Group = "Remote"},
     {Name = "Force Invis", Cmd = "forceinvis", Type = "toggle", Group = "Remote"},
     {Name = "Force CangTou", Cmd = "forcecangtou", Type = "toggle", Group = "Remote"},
-    {Name = "Force InfJump", Cmd = "forceinfjump", Type = "toggle", Group = "Remote"},
-    {Name = "Force JumpPower", Cmd = "forceloopjp", Type = "toggle", Group = "Remote"},
     {Name = "Force AutoReload", Cmd = "forceautoreload", Type = "toggle", Group = "Remote"},
 }
